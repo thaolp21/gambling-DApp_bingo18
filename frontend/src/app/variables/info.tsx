@@ -1,5 +1,8 @@
+import getPriceFeedETHUSD from "../blockchain/data-feeds"
+
 export const PRICE_USD = 10
 export const ETH_USD_RATE = 2900
+
 export enum UNIT {
     ETH,
     USD
