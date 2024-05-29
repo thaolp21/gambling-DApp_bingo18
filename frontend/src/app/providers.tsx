@@ -22,7 +22,7 @@ import {
     sepolia,
 } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, http } from 'wagmi';
 
 const { wallets } = getDefaultWallets();
 

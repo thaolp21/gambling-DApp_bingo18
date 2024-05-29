@@ -1,7 +1,9 @@
 import getPriceFeedETHUSD from "../blockchain/data-feeds"
 
 export const PRICE_USD = 10
+export const PRICE_ETH = 0.001
 export const ETH_USD_RATE = 2900
+export const DECIMALS = 8
 
 export enum UNIT {
     ETH,
@@ -72,4 +74,16 @@ export enum TICKET_CODE {
     MATCH_3_5 = 'MATCH_3_5',
     MATCH_3_6 = 'MATCH_3_6',
     MATCH_3_7 = 'MATCH_3_7',
+}
+export enum SM_OPTIONS {
+    SUM, // 3 options
+    GLE, // 16 options
+    ONEDUP, // 6 options
+    TWODUP, // 6 options
+    THREEDUP // 7 options
+}
+export enum SM_GLE_VALUE {
+    SMALL,
+    DRAW,
+    BIG
 }

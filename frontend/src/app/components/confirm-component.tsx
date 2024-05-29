@@ -1,13 +1,11 @@
 'use client';
 
-import { Button, Dialog, DialogPanel, DialogTitle, } from "@headlessui/react";
-import { STATUS_CONNECT_WL, UNIT } from "../variables/info";
-import { DataUser, TicketInfo } from "../variables/type";
+import { Button } from "@headlessui/react";
+import { CATEGORY, SM_GLE_VALUE, SM_OPTIONS, UNIT } from "../variables/info";
+import { DataUser, SCTicket, SCTicketValue, TicketInfo } from "../variables/type";
 import { useAccount, useBalance } from "wagmi";
-import { http, createConfig } from '@wagmi/core'
-import { mainnet, sepolia } from '@wagmi/core/chains'
 import { useState } from "react";
-import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 export default function ConfirmComponent(
     {
@@ -27,8 +25,7 @@ export default function ConfirmComponent(
     const { address, isConnected } = useAccount()
     const [openNotiDialog, setOpenCWDialog] = useState<boolean>(false)
     const { openConnectModal } = useConnectModal();
-    const result = useBalance({ address })
-    const { formatted, value, decimals, symbol } = result.data!
+    const { data } = useBalance({ address })
     const dataUser: DataUser = {
         address: address!,
         tikets: tickets,
@@ -36,14 +33,56 @@ export default function ConfirmComponent(
         total_USD: calcTotalPrice(tickets, UNIT.USD)
     }
     const checkInsufBl = () => {
-        const balanceWl = Number(value) / (Math.pow(10, decimals))
+        const balanceWl = Number(data?.value) / (Math.pow(10, data?.decimals!))
         return (balanceWl < dataUser.total_ETH)
     }
     const confirm = () => {
         if (isConnected && !checkInsufBl()) {
+            dataUser.tikets = dataUser.tikets.filter(el => el.quantity)
+            dataUser.SCTickets = convertSCTickets(dataUser.tikets)
             console.log(dataUser);
             onConfirm(true)
         }
+    }
+    const addValueOptSCTks = (optCode: SM_OPTIONS, val: SCTicketValue, arrs: SCTicket[]) => {
+        const scTk = arrs.find(el => el.option === optCode)
+        if (scTk) {
+            scTk.values.push(val)
+        } else {
+            arrs.push({ option: optCode, values: [val] })
+        }
+        return arrs
+    }
+
+    const convertSCTickets = (data: TicketInfo[]) => {
+        return data.reduce((res: SCTicket[], d) => {
+            const codes = d.code?.split('_') || []
+            const amount = d.quantity || 0
+            let optCode = SM_OPTIONS.SUM
+            let value: any = +codes[codes.length - 1]
+
+            if (codes[0] == CATEGORY.SUM) {
+                if (isNaN(value)) {
+                    optCode = SM_OPTIONS.GLE
+                    const key = codes[1] as unknown as number
+                    value = SM_GLE_VALUE[key]
+                }
+            } else {
+                switch (codes[1]) {
+                    case '1':
+                        optCode = SM_OPTIONS.ONEDUP
+                        break;
+                    case '2':
+                        optCode = SM_OPTIONS.TWODUP
+                        break;
+                    default:
+                        optCode = SM_OPTIONS.THREEDUP
+                        break
+                }
+            }
+            res = addValueOptSCTks(optCode, { value, amount }, res)
+            return res
+        }, [])
     }
     const renderConfirmBtn = () => {
         const btnConn = <Button onClick={openConnectModal} className="flex gap-3 justify-center hover:bg-white hover:text-black hover:rounded-lg  transition-all w-full px-2 py-1 ">
@@ -82,12 +121,12 @@ export default function ConfirmComponent(
                         {renderConfirmBtn()}
                         <span>|</span>
                     </div>
-                    <div className="w-2/6 flex flex-col gap-1 justify-center items-end">
+                    <div className="w-5/12 flex flex-col gap-1 justify-center items-end">
                         <div className='flex gap-4 font-bold'>
                             <span>Total: </span>
                             <div >
                                 <span>$ {dataUser.total_USD} USD</span>
-                                <span> - ⟠ {dataUser.total_ETH.toFixed(7)} ETH</span>
+                                <span> - ⟠ {dataUser.total_ETH.toFixed(4)} ETH</span>
                             </div>
                         </div>
                         {!isConnected && <p className="text-xs italic">Connect wallet to start buying tickets</p>}

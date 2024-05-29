@@ -1,3 +1,4 @@
+import { useReadContract, http, createConfig } from "wagmi";
 import Web3 from "web3";
 
 export default async function getPriceFeedETHUSD() {
@@ -64,11 +65,6 @@ export default async function getPriceFeedETHUSD() {
     let latestPrice = await priceFeed.methods
         .latestRoundData()
         .call()
-        .then((roundData) => {
-            const { answer, roundId } = roundData as any
-            latestPrice = answer
-        }).catch((err) => console.log(err))
-    console.log(latestPrice);
 
     return latestPrice
 }

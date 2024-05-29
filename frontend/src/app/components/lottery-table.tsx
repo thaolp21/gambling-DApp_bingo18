@@ -13,10 +13,12 @@ import { KindTable, TicketInfo } from "../variables/type";
 
 const LotteryTable = ({
     getSelectedTickets,
-    homeTickets
+    homeTickets,
+    priceFeedETHUSD
 }: {
     getSelectedTickets: any,
-    homeTickets: TicketInfo[]
+    homeTickets: TicketInfo[],
+    priceFeedETHUSD: number
 }) => {
     const biDrSmTis: TicketInfo[] = AllTickets
     const [isOpenDialog, setIsOpenDialog] = useState(false);
@@ -76,7 +78,7 @@ const LotteryTable = ({
                     return renderPartOfTbl(e, i)
                 })}
                 {isOpenDialog && <div className="ticket-dialog">
-                    <CartModal openDialog={isOpenDialog} setOpenDialog={setIsOpenDialog} ticketInfo={ticketInfo} selectedTickets={(res: TicketInfo) => setSelectedTicket(res)} />
+                    <CartModal priceFeedETHUSD={priceFeedETHUSD} openDialog={isOpenDialog} setOpenDialog={setIsOpenDialog} ticketInfo={ticketInfo} selectedTickets={(res: TicketInfo) => setSelectedTicket(res)} />
                 </div>}
                 {kindTable.cat && <div className="detail-dialog">
                     <CartDetail kindTable={kindTable} setOpenDialog={setKindTable} />

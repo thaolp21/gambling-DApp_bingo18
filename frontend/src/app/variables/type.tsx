@@ -1,4 +1,4 @@
-import { CATEGORY, KIND_OF_MATCH, KIND_OF_SUM } from "./info"
+import { CATEGORY, KIND_OF_MATCH, KIND_OF_SUM, SM_OPTIONS, SM_GLE_VALUE } from "./info"
 
 export type TicketInfo = {
     code?: string, category?: string, kind?: number, title?: string, prizeValue?: string, des?: string | null, cl?: string, quantity?: number, totalValueETH?: number, totalValueUSD?: number, ETHUSDRate?: number
@@ -15,5 +15,14 @@ export type DataUser = {
     address: string;
     tikets: TicketInfo[],
     total_ETH: number,
-    total_USD: number
+    total_USD: number,
+    SCTickets?: SCTicket[]
+}
+export type SCTicket = {
+    option: SM_OPTIONS,
+    values: SCTicketValue[]
+}
+export type SCTicketValue = {
+    value: number | SM_GLE_VALUE,
+    amount: number
 }

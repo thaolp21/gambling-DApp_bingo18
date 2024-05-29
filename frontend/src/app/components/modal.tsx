@@ -2,7 +2,7 @@
 
 import { Button, Dialog, DialogPanel, DialogTitle, Input, Transition, TransitionChild } from '@headlessui/react';
 import { useState } from 'react';
-import { ETH_USD_RATE, MINUS_PLUS, PRICE_USD, TICKET_CODE } from '../variables/info';
+import { ETH_USD_RATE, MINUS_PLUS, PRICE_ETH, PRICE_USD, TICKET_CODE, DECIMALS } from '../variables/info';
 import Image from 'next/image';
 import { TicketInfo } from '../variables/type';
 
@@ -11,20 +11,24 @@ export default function CartModal({
     setOpenDialog,
     ticketInfo,
     selectedTickets,
+    priceFeedETHUSD
 }: {
     openDialog: boolean,
     setOpenDialog: any,
     ticketInfo: TicketInfo,
     selectedTickets: any,
+    priceFeedETHUSD: number
 }) {
     const options = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     const [ticket, setTicket] = useState({ ...ticketInfo })
+    const rate = priceFeedETHUSD ? +(Number(priceFeedETHUSD) / Math.pow(10, DECIMALS)).toFixed(0) : ETH_USD_RATE
     const calculateTotal = (ticket: TicketInfo, qtt: number) => {
+
         return {
             ...ticket,
             quantity: qtt,
-            totalValueUSD: qtt * PRICE_USD,
-            totalValueETH: (qtt * PRICE_USD) / ETH_USD_RATE
+            totalValueUSD: (qtt * PRICE_ETH) * rate,
+            totalValueETH: qtt * PRICE_ETH
         }
     }
     const setQuantity = (action: MINUS_PLUS, quantity: number = 0) => {
@@ -111,18 +115,18 @@ export default function CartModal({
                                     height={30}
                                     alt={'usd-icon'} />
                             </div>
-                            <span>{ETH_USD_RATE} USD</span>
+                            <span>{rate} USD</span>
                         </div>
                         <div className='flex gap-4 w-full justify-between'>
                             <span>Price/ticket:</span>
-                            <strong>$ {PRICE_USD} USD</strong>
+                            <strong>$ {PRICE_ETH} ETH</strong>
                         </div>
                         <hr></hr>
                         <div className='flex gap-4 w-full justify-between'>
                             <span>Total: </span>
                             <div >
-                                <strong>$ {ticket.totalValueUSD} USD</strong>
-                                <strong> - ⟠ {ticket.totalValueETH?.toFixed(7)} ETH</strong>
+                                <strong>$ {ticket.totalValueUSD?.toFixed(2)} USD</strong>
+                                <strong> - ⟠ {ticket.totalValueETH?.toFixed(4)} ETH</strong>
                             </div>
                         </div>
                         <div className='text-right text-xs italic'>Maximum quantity 100 tickets each kind/round</div>
