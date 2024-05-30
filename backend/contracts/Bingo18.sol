@@ -33,7 +33,7 @@ contract Bingo18 is VRFConsumerBaseV2 {
     }
 
     uint256 private constant TICKET_PRICE = 1e16; // 0.01 ETH
-    uint8 private pastResults;
+    uint8 private s_pastResults;
     uint256 public rewardPool;
     mapping(address => Ticket[]) private s_userOptions;
     address payable[] private s_players;
@@ -46,7 +46,7 @@ contract Bingo18 is VRFConsumerBaseV2 {
 
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     bytes32 private immutable i_keyHash;
-    uint64 private immutable i_subscriptionId;
+    uint256 private immutable i_subscriptionId;
     uint16 private immutable i_requestConfirmations;
     uint32 private immutable i_callbackGasLimit;
     uint32 private constant NUMWORDS = 3;
@@ -63,11 +63,10 @@ contract Bingo18 is VRFConsumerBaseV2 {
     /// @notice Initialize the contract's state variable and vrfCoordinator
     /// @dev Explain to a developer any extra details
     /// @param vrfCoordinator: the address of the Coordinator contract
-    /// param : the address of the Coordinator contract
     constructor(
         address vrfCoordinator,
         bytes32 keyHash,
-        uint64 subscriptionId,
+        uint256 subscriptionId,
         uint16 requestConfirmations,
         uint32 callbackGasLimit
     ) VRFConsumerBaseV2(vrfCoordinator) {
@@ -82,11 +81,31 @@ contract Bingo18 is VRFConsumerBaseV2 {
     /// @dev This function will trigger when user click on 'Confirm' button, receiving list of options from user
     /// @param options the array of string contains ticket type that user selected
 
-    function enterBingo(Ticket[] memory options) public {
+    function enterBingo(Ticket[] memory options) public payable {
+        require(msg.value == TICKET_PRICE, "Not enough fee to join");
+
         // 1. track the user's option
-        s_userOptions[msg.sender] = options;
+        _storeUserOptions(msg.sender, options);
         // 2. add user to player list
         s_players.push(payable(msg.sender));
+    }
+
+    // Helper function to store user options
+    function _storeUserOptions(address user, Ticket[] memory options) internal {
+        Ticket[] storage userTickets = s_userOptions[user];
+        delete s_userOptions[user]; // Clear any existing tickets
+
+        for (uint256 i = 0; i < options.length; i++) {
+            Ticket memory ticket = options[i];
+            Value[] memory values = ticket.values;
+
+            Value[] storage storedValues = userTickets.push().values;
+            for (uint256 j = 0; j < values.length; j++) {
+                storedValues.push(values[j]);
+            }
+
+            userTickets[i].option = ticket.option;
+        }
     }
 
     // Takes your specified parameters and submits the request to the VRF coordinator contract.
@@ -312,5 +331,9 @@ contract Bingo18 is VRFConsumerBaseV2 {
                 require(sent, "Failed to send the reward");
             }
         }
+
+        s_requests[_requestId].fulfilled = true;
+        s_requests[_requestId].randomWords = _randomWords;
+        emit RequestFulfilled(_requestId, _randomWords);
     }
 }
