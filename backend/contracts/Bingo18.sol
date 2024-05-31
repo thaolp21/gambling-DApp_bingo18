@@ -3,8 +3,9 @@ pragma solidity ^0.8.19;
 
 import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
+import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
-contract Bingo18 is VRFConsumerBaseV2 {
+contract Bingo18 is VRFConsumerBaseV2, AutomationCompatibleInterface {
     //* ================================================================
     //* │                       State variables                        │
     //* ================================================================
@@ -32,11 +33,11 @@ contract Bingo18 is VRFConsumerBaseV2 {
         READY
     }
 
-    uint256 private constant TICKET_PRICE = 1e16; // 0.01 ETH
-    uint8 private s_pastResults;
-    uint256 public rewardPool;
+    uint256 private constant TICKET_PRICE = 1e17; // 0.001 ETH
+    uint256[3][5] public s_pastResults; // reverse the index because of array design from solidity
     mapping(address => Ticket[]) private s_userOptions;
-    address payable[] private s_players;
+    address payable[] public s_players;
+    BingoState private s_bingoState;
 
     //* ================================================================
     //* │                            VRF                               │
@@ -75,6 +76,7 @@ contract Bingo18 is VRFConsumerBaseV2 {
         i_subscriptionId = subscriptionId;
         i_requestConfirmations = requestConfirmations;
         i_callbackGasLimit = callbackGasLimit;
+        s_bingoState = BingoState.READY;
     }
 
     /// @notice Allow user to participate to our lottery
@@ -83,11 +85,29 @@ contract Bingo18 is VRFConsumerBaseV2 {
 
     function enterBingo(Ticket[] memory options) public payable {
         require(msg.value == TICKET_PRICE, "Not enough fee to join");
+        require(
+            s_bingoState == BingoState.READY,
+            "Bingo is calculating reward!"
+        );
 
         // 1. track the user's option
         _storeUserOptions(msg.sender, options);
         // 2. add user to player list
         s_players.push(payable(msg.sender));
+    }
+
+    // function to trigger chainlink upkeep
+    function checkUpkeep(
+        bytes memory /* checkData */
+    )
+        public
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
+        if (s_players.length > 0) {
+            upkeepNeeded = true;
+        } else upkeepNeeded = false;
     }
 
     // Helper function to store user options
@@ -109,9 +129,14 @@ contract Bingo18 is VRFConsumerBaseV2 {
     }
 
     // Takes your specified parameters and submits the request to the VRF coordinator contract.
-    function requestRandomWords() external returns (uint256 requestId) {
+    function performUpkeep(bytes calldata /* performData */) external override {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+
+        require(!upkeepNeeded, "Error, No Player!");
+
+        s_bingoState = BingoState.CALCULATING;
         // Will revert if subscription is not set and funded.
-        requestId = i_vrfCoordinator.requestRandomWords(
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
             i_keyHash,
             i_subscriptionId,
             i_requestConfirmations,
@@ -125,10 +150,37 @@ contract Bingo18 is VRFConsumerBaseV2 {
         });
         requestIds.push(requestId);
         emit RequestSent(requestId, NUMWORDS);
-        return requestId;
     }
 
-    // TODO: Use chainlink vrf for random source
+    function _resetState() internal {
+        // Clear user options
+        for (
+            uint256 playerIndex = 0;
+            playerIndex < s_players.length;
+            playerIndex++
+        ) {
+            address userAddress = s_players[playerIndex];
+            delete s_userOptions[userAddress];
+        }
+
+        // Clear the player list
+        delete s_players;
+    }
+
+    function _save5PastResults(uint256[] memory randomWords) internal {
+        // save the result into s_pastResults
+        // delete the last element, add to the top of the 2d array
+        for (uint256 i = s_pastResults.length - 1; i > 0; i++) {
+            delete s_pastResults[i];
+            s_pastResults[i] = s_pastResults[i - 1];
+        }
+
+        // manually add the 3 random words to the first element
+        s_pastResults[0][0] = randomWords[0];
+        s_pastResults[0][1] = randomWords[1];
+        s_pastResults[0][2] = randomWords[2];
+    }
+
     function fulfillRandomWords(
         uint256 _requestId,
         uint256[] memory _randomWords
@@ -317,9 +369,6 @@ contract Bingo18 is VRFConsumerBaseV2 {
                 }
             }
 
-            s_requests[_requestId].fulfilled = true;
-            s_requests[_requestId].randomWords = _randomWords;
-
             // after having the winning amount of each user, withdraw the fund to them
             if (winAmount > 0) {
                 require(
@@ -335,5 +384,17 @@ contract Bingo18 is VRFConsumerBaseV2 {
         s_requests[_requestId].fulfilled = true;
         s_requests[_requestId].randomWords = _randomWords;
         emit RequestFulfilled(_requestId, _randomWords);
+
+        s_bingoState = BingoState.READY;
+        _resetState();
+        _save5PastResults(_randomWords);
+    }
+
+    function getListOfPlayer() public view returns (address payable[] memory) {
+        return s_players;
+    }
+
+    function getBingoState() public view returns (BingoState) {
+        return s_bingoState;
     }
 }
