@@ -33,7 +33,7 @@ contract Bingo18 is VRFConsumerBaseV2, AutomationCompatibleInterface {
         READY
     }
 
-    uint256 private constant TICKET_PRICE = 1e17; // 0.001 ETH
+    uint256 private constant TICKET_PRICE = 1e15; // 0.001 ETH
     uint256[3][5] public s_pastResults; // reverse the index because of array design from solidity
     mapping(address => Ticket[]) private s_userOptions;
     address payable[] public s_players;
@@ -83,8 +83,32 @@ contract Bingo18 is VRFConsumerBaseV2, AutomationCompatibleInterface {
     /// @dev This function will trigger when user click on 'Confirm' button, receiving list of options from user
     /// @param options the array of string contains ticket type that user selected
 
+    function _calculateFee(
+        Ticket[] memory options
+    ) internal pure returns (uint256) {
+        uint256 totalTicket = 0;
+        for (
+            uint256 ticketIndex = 0;
+            ticketIndex < options.length;
+            ticketIndex++
+        ) {
+            Value[] memory values = options[ticketIndex].values;
+            for (
+                uint256 valueIndex = 0;
+                valueIndex < values.length;
+                valueIndex++
+            ) {
+                Value memory value = values[valueIndex];
+                totalTicket += value.amount;
+            }
+        }
+        return totalTicket * TICKET_PRICE;
+    }
+
     function enterBingo(Ticket[] memory options) public payable {
-        require(msg.value == TICKET_PRICE, "Not enough fee to join");
+        // calculate the fee user need to pay
+        uint256 totalFee = _calculateFee(options);
+        require(msg.value == totalFee, "Not enough fee to join");
         require(
             s_bingoState == BingoState.READY,
             "Bingo is calculating reward!"
@@ -94,20 +118,6 @@ contract Bingo18 is VRFConsumerBaseV2, AutomationCompatibleInterface {
         _storeUserOptions(msg.sender, options);
         // 2. add user to player list
         s_players.push(payable(msg.sender));
-    }
-
-    // function to trigger chainlink upkeep
-    function checkUpkeep(
-        bytes memory /* checkData */
-    )
-        public
-        view
-        override
-        returns (bool upkeepNeeded, bytes memory /* performData */)
-    {
-        if (s_players.length > 0) {
-            upkeepNeeded = true;
-        } else upkeepNeeded = false;
     }
 
     // Helper function to store user options
@@ -126,6 +136,20 @@ contract Bingo18 is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
             userTickets[i].option = ticket.option;
         }
+    }
+
+    // function to trigger chainlink upkeep
+    function checkUpkeep(
+        bytes memory /* checkData */
+    )
+        public
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
+        if (s_players.length > 0) {
+            upkeepNeeded = true;
+        } else upkeepNeeded = false;
     }
 
     // Takes your specified parameters and submits the request to the VRF coordinator contract.
@@ -396,5 +420,9 @@ contract Bingo18 is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     function getBingoState() public view returns (BingoState) {
         return s_bingoState;
+    }
+
+    function get5PastResult() public view returns (uint256[3][5] memory) {
+        return s_pastResults;
     }
 }
