@@ -3,7 +3,7 @@ import { SCTicket } from "../variables/type";
 
 const url = 'https://rpc.ankr.com/eth_sepolia'
 const contractAddr = "0x631cc2858D1A438C579e08391e51f835B714706f"
-const privateKey = '0x4bc5c64baf906bdf225a70b6f7376878059db54e7fe39e767205344ba7be8b24';
+const privateKey = process.env.PRIVATE_KEY!
 
 const web3 = new Web3(new Web3.providers.HttpProvider(url))
 
