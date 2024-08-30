@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import '@rainbow-me/rainbowkit/styles.css';
-import NavLinks from "./components/nav-links";
+import 'react-toastify/dist/ReactToastify.css'
 import { Providers } from "./providers";
-import getPriceFeedETHUSD from "./blockchain/data-feeds";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,7 +23,11 @@ export default async function RootLayout({
     <html lang="en" className="h-full [color-scheme:dark]">
       <body>
         <Providers>
-          <NavLinks />
+          {/* <NavLinks /> */}
+          <div className="flex justify-end items-center gap-x-3 p-3"
+          >
+            <ConnectButton />
+          </div>
           <main>{children}</main>
         </Providers>
       </body>

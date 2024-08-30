@@ -32,7 +32,8 @@ export const KindTables: KindTable[] = [
         hasDiffKind: false,
         kind: KIND_OF_MATCH.ONE_NUMBER,
         src: '/six-balls.png',
-        title: 'match 1 numbers'
+        title: 'match 1 numbers',
+        subTitle: '1-1.2_2-2_3-3'
     },
 ]
 const codeTwoNums = [
@@ -76,7 +77,7 @@ const genTicketsInfo = (codes: string[]) => {
     return codes.map((code) => {
         const keys = code.split('_')
         let kind = KIND_OF_MATCH.ONE_NUMBER
-        let prizeValue = 'x1.5'
+        let prizeValue = ''
         let title = genTitle(Number(keys[2]), 3)
         switch (keys[1]) {
             case '2':
@@ -86,7 +87,7 @@ const genTicketsInfo = (codes: string[]) => {
                 break;
             case '3':
                 kind = KIND_OF_MATCH.THREE_NUMBERS
-                prizeValue = 'x120'
+                prizeValue = keys[2] == "7" ? 'x20' : 'x120'
                 title = genTitle(Number(keys[2]), 1)
                 break;
         }

@@ -10,6 +10,7 @@ export type KindTable = {
     hasDiffKind?: boolean,
     src?: string,
     title?: string
+    subTitle?: string
 }
 export type DataUser = {
     address: string;

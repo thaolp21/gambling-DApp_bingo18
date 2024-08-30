@@ -17,7 +17,6 @@ export default function NavLinks({
         { href: '/history', name: 'History' },
         { href: '/drawing-result', name: 'Drawing result' },
     ];
-    // Alternatively, you could use `useParams` or `useSelectedLayoutSegment(s)`
     const pathname = usePathname();
 
     return (

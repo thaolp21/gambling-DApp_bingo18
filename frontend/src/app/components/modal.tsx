@@ -64,7 +64,7 @@ export default function CartModal({
                         <div className='flex justify-evenly w-full text-lg'>
                             <p >{ticket?.des ? ticket?.title : ticket?.category}</p>
                             <strong className='bg-gradient-to-r from-orange-100 via-orange-500 to-orange-100 w-2/6 text-center rounded-lg '>{ticket?.des ? ticket?.des : ticket.title}</strong>
-                            <p>{ticket?.prizeValue}</p>
+                            <p>{ticket?.prizeValue ? ticket?.prizeValue : 'x1.2'}</p>
                         </div>
                     </div>
                     <div className='flex flex-col'>

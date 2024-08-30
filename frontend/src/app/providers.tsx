@@ -27,8 +27,8 @@ import { WagmiProvider, http } from 'wagmi';
 const { wallets } = getDefaultWallets();
 
 const config = getDefaultConfig({
-    appName: 'RainbowKit demo',
-    projectId: 'YOUR_PROJECT_ID',
+    appName: 'Bingo18 app',
+    projectId: 'BINGO_18',
     wallets: [
         ...wallets,
         {
@@ -43,7 +43,6 @@ const config = getDefaultConfig({
         arbitrum,
         base,
         sepolia
-        // ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true' ? [sepolia] : []),
     ],
     ssr: true,
 });

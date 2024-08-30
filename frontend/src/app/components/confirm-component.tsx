@@ -40,8 +40,7 @@ export default function ConfirmComponent(
         if (isConnected && !checkInsufBl()) {
             dataUser.tikets = dataUser.tikets.filter(el => el.quantity)
             dataUser.SCTickets = convertSCTickets(dataUser.tikets)
-            console.log(dataUser);
-            onConfirm(true)
+            onConfirm(dataUser)
         }
     }
     const addValueOptSCTks = (optCode: SM_OPTIONS, val: SCTicketValue, arrs: SCTicket[]) => {
@@ -125,7 +124,7 @@ export default function ConfirmComponent(
                         <div className='flex gap-4 font-bold'>
                             <span>Total: </span>
                             <div >
-                                <span>$ {dataUser.total_USD} USD</span>
+                                <span>$ {dataUser.total_USD.toFixed(2)} USD</span>
                                 <span> - ⟠ {dataUser.total_ETH.toFixed(4)} ETH</span>
                             </div>
                         </div>
